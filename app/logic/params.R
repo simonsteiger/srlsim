@@ -7,6 +7,7 @@ box::use(
   sc = scales,
   pal = palettes,
   magrittr[`%>%`],
+  stats[rnorm],
 )
 
 # PREPARE SIMULATION ----
@@ -15,7 +16,8 @@ set.seed(42)
 
 # Prepare design matrix
 
-# Number of subjects
+#' @export
+#' Number of subjects
 j <- 12
 
 # Number of trials per subject in each reversal
@@ -27,25 +29,30 @@ n_rev <- 10
 # Total number of trials across all individuals
 n_tot <- j * n_trial * n_rev
 
-# Subject-response vector
+#' @export
+#' Subject-response vector
 id <- rep(1:j, each = n_trial * n_rev)
 
-# Trial vector
+#' @export
+#' Trial vector
 trial_all <- rep(0:(n_trial - 1), times = j * n_rev)
 
-# Effect coding for species
+#' @export
+#' Effect coding for species
 species <- rep(c(-0.5, 0.5), each = n_tot / 2)
 
 # Reversal vector for one individual
 rev_one <- rep(0:(n_rev - 1), each = n_trial)
 
-# Reversal vector for all individuals
+#' @export
+#' Reversal vector for all individuals
 rev_all <- rep(rev_one, times = j)
 
 # rev:trial interaction vector
 trial_by_rev <- rev_all * trial_all
 
-# Population level regression coefficients
+#' @export
+#' Population level regression coefficients
 gamma <- c(
   mu = 0.1,
   eta = 0.015,
@@ -56,22 +63,17 @@ gamma <- c(
   lambda = 0.02
 )
 
-# Number of group level effects
+#' @export
+#' Number of group level effects
 tau <- c(
-  mu = 0.01, # this is alpha
-  eta = 0.01, # this is theta
-  nu = 0.01, # this is beta
+  mu = 0.01, # alpha in formula
+  eta = 0.01, # theta in formula
+  nu = 0.01, # beta in formula
   ksi = 0,
   phi = 0,
   pi = 0,
   lambda = 0.01
 )
-
-# Std dev of individual observation
-sigma <- 0.015
-
-# Group-level coefficients
-beta <- mapply(function(g, t) rnorm(j, g, t), g = gamma, t = tau)
 
 # Mu
 v_mu <- rep(1, times = n_tot)
@@ -94,28 +96,17 @@ v_phi <- c(rep(rev_one, times = j / 2), rep(0, times = n_tot / 2))
 # Pi Species-specific trial effect
 v_pi <- c(rep(1:n_trial, times = j * n_rev / 2), rep(0, times = n_tot / 2))
 
-# Bind submatrices together
-params <- cbind(v_mu, v_eta, v_nu, v_ksi, v_phi, v_pi, v_lambda)
+#' @export
+#' Coefficient matrix
+coefs <- cbind(v_mu, v_eta, v_nu, v_ksi, v_phi, v_pi, v_lambda)
 
-outcome <- vector(length = n_tot)
+#' @export
+#' Std dev of individual observation
+sigma <- 0.015
 
-# SIMULATE DATA ----
-for (n in seq_along(1:(n_tot))) {
-  # simulate linear response data
-  outcome[n] <- rnorm(1, params[n, ] %*% beta[id[n], ], sigma)
-}
-
-# Make a data frame
-out <-
-  tbl$tibble(id, species, rev_all, trial_all, outcome) %>%
-  dp$mutate(
-    dp$across(c(id, species), as.factor)
-  ) %>%
-  dplyr::mutate(
-    trial_per_sub = seq_len(dp$n()),
-    .by = id
-  ) %>%
-  tdr$nest(.by = species)
+#' @export
+#' Group-level coefficients
+beta <- mapply(function(g, t) rnorm(j, g, t), g = gamma, t = tau)
 
 # Plot
 srlplot <- function(data) {
@@ -125,9 +116,9 @@ srlplot <- function(data) {
     gg$theme_bw()
 }
 
-p <- out %>%
-  dp$mutate(
-    plot = pr$map(data, ~ srlplot(.x))
-  )
-
-pr$walk(p$plot, print)
+# p <- out %>%
+#   dp$mutate(
+#     plot = pr$map(data, ~ srlplot(.x))
+#   )
+# 
+# pr$walk(p$plot, print)
