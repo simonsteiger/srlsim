@@ -24,7 +24,7 @@ j <- 12
 n_trial <- 30
 
 # Number of reversals
-n_rev <- 10
+n_rev <- 12
 
 # Total number of trials across all individuals
 n_tot <- j * n_trial * n_rev

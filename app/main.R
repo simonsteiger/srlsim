@@ -1,20 +1,26 @@
 box::use(
-  shiny[bootstrapPage, moduleServer, NS, renderText, tags, textOutput],
+  sh = shiny,
+  bsl = bslib,
+)
+
+box::use(
+  app / view / sim,
+  app / view / viz
 )
 
 #' @export
 ui <- function(id) {
-  ns <- NS(id)
-  bootstrapPage(
-    tags$h3(
-      textOutput(ns("message"))
-    )
+  ns <- sh$NS(id)
+  bsl$page(
+    sim$ui(ns("sim")),
+    viz$ui(ns("viz"))
   )
 }
 
 #' @export
 server <- function(id) {
-  moduleServer(id, function(input, output, session) {
-    output$message <- renderText("Hello!")
+  sh$moduleServer(id, function(input, output, session) {
+    df <- sim$server("sim")
+    viz$server("viz", df)
   })
 }
