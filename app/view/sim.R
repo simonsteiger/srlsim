@@ -2,6 +2,7 @@ box::use(
   dp = dplyr,
   pr = purrr,
   sh = shiny,
+  bsi = bsicons,
   magrittr[`%>%`]
 )
 
@@ -14,7 +15,19 @@ box::use(
 ui <- function(id) {
   ns <- sh$NS(id)
   sh$tagList(
-    sh$actionButton(ns("rerun"), label = "Simulate")
+    sh$div(
+      class = "mt-4 d-flex justify-content-center",
+      sh$actionButton(
+        ns("rerun"),
+        class = "btn-success",
+        label = "Repeat simulation",
+        icon = sh$icon("repeat")
+      )
+    ),
+    sh$div(
+      class = "mt-4 d-flex justify-content-center",
+      "True SRL data would be better approximated by Richard's curve (next step!)"
+    )
   )
 }
 
@@ -23,13 +36,13 @@ server <- function(id) {
   sh$moduleServer(
     id,
     function(input, output, session) {
-      res <- sh$eventReactive(input$rerun, {
+      res <- sh$eventReactive(input$rerun, ignoreNULL = FALSE, {
         srl$simulate()
       })
 
       sh$reactive(
         srl$prepare_plot_df(
-          estimate = res(),
+          performance = res(),
           id = par$id,
           species = par$species,
           trial = par$trial_all,

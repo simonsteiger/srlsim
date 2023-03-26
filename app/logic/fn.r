@@ -2,8 +2,10 @@ box::use(
     tbl = tibble,
     tdr = tidyr,
     dp = dplyr,
+    str = stringr,
     rl = rlang,
     gg = ggplot2,
+    bsl = bslib,
     magrittr[`%>%`],
     stats[runif, rnorm],
 )
@@ -37,9 +39,12 @@ prepare_plot_df <- function(...) {
         dp$mutate(
             dp$across(c(id, species), as.factor)
         ) %>%
+        dp$filter(rev %in% c(0, 3, 7, 11)) %>% # could add control for that
         dp$mutate(
-            trial_per_sub = seq_len(dp$n()),
-            .by = id
+          rev = str$str_pad(rev, width = 2, side = "left", pad = "0"),
+          rev = as.factor(paste("Reversal", rev)),
+          trial_per_sub = seq_len(dp$n()),
+          .by = id
         ) %>%
         tdr$nest(.by = species)
 }
@@ -49,9 +54,23 @@ plot_srl <- function(data, color = NULL, facet = NULL) {
     color <- rl$enquo(color)
     facet <- rl$enquo(facet)
 
-    gg$ggplot(data, gg$aes(trial, estimate, color = !!color)) +
+    gg$ggplot(data, gg$aes(trial, performance, color = !!color)) +
         gg$geom_line(alpha = 0.5) +
         gg$facet_wrap(gg$vars(!!facet)) +
-        gg$scale_fill_viridis_d() +
-        gg$theme_bw()
+        gg$scale_color_viridis_d(option = "mako")
+}
+
+#' @export
+hfb_card <- function(header, fill, body, card_height = 700, card_body_height = "15%") {
+    bsl$card(
+        class = "border-primary",
+        height = card_height, full_screen = TRUE,
+        bsl$card_header(header, class = "bg-primary"),
+        bsl$card_body_fill(fill, class = "bg-secondary"),
+        bsl$card_body(
+            class = "bg-secondary",
+            height = card_body_height,
+            body
+        )
+    )
 }
